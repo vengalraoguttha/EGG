@@ -6,6 +6,9 @@
 import torch
 
 from egg.core.interaction import LoggingStrategy
+from egg.core.gs_wrappers import FixedLengthSenderGS
+from egg.core.gs_wrappers import FixedLengthReceiverGS
+from egg.core.gs_wrappers import FixedLengthSenderReceiverGS
 from egg.zoo.emcom_as_ssl.archs import (
     EmComSSLSymbolGame,
     EmSSLSender,
@@ -53,7 +56,23 @@ def build_game(opts):
     train_logging_strategy = LoggingStrategy(False, False, True, True, True, False)
     test_logging_strategy = LoggingStrategy(False, False, True, True, True, False)
 
-    if opts.simclr_sender:
+    if opts.fixed_symbols:
+        sender = FixedLengthSenderGS(
+            vision_encoder,
+            vocab_size=opts.vocab_size,
+            embed_dim=opts.embed_dim,
+            hidden_size=opts.hidden_size,
+            temperature=opts.gs_temperature,
+            nos=opts.no_of_symbols,
+        )
+        receiver = FixedLengthReceiverGS(
+            vision_encoder,
+            vocab_size=opts.vocab_size,
+            embed_dim=opts.embed_dim,
+            hidden_size=opts.hidden_size,
+            nos=opts.no_of_symbols,
+        )
+    elif opts.simclr_sender:
         sender = SimCLRSender(
             input_dim=visual_features_dim,
             hidden_dim=opts.projection_hidden_dim,
@@ -76,15 +95,18 @@ def build_game(opts):
             output_dim=opts.projection_output_dim,
         )
 
-    game = EmComSSLSymbolGame(
-        sender,
-        receiver,
-        loss,
-        train_logging_strategy=train_logging_strategy,
-        test_logging_strategy=test_logging_strategy,
-    )
+    if opts.fixed_symbols:
+        game = FixedLengthSenderReceiverGS(sender, receiver, loss)
+    else:
+        game = EmComSSLSymbolGame(
+            sender,
+            receiver,
+            loss,
+            train_logging_strategy=train_logging_strategy,
+            test_logging_strategy=test_logging_strategy,
+        )
 
-    game = VisionGameWrapper(game, vision_encoder)
+        game = VisionGameWrapper(game, vision_encoder)
     if opts.distributed_context.is_distributed:
         game = torch.nn.SyncBatchNorm.convert_sync_batchnorm(game)
 

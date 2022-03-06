@@ -59,7 +59,7 @@ def build_game(opts):
     if opts.fixed_symbols:
         sender = FixedLengthSenderGS(
             vision_encoder,
-            vocab_size=opts.vocab_size,
+            vocab_size=opts.vocab_s,
             embed_dim=opts.embed_dim,
             hidden_size=opts.hidden_size,
             temperature=opts.gs_temperature,
@@ -67,7 +67,7 @@ def build_game(opts):
         )
         receiver = FixedLengthReceiverGS(
             vision_encoder,
-            vocab_size=opts.vocab_size,
+            vocab_size=opts.vocab_s,
             embed_dim=opts.embed_dim,
             hidden_size=opts.hidden_size,
             nos=opts.no_of_symbols,

@@ -140,7 +140,7 @@ def get_game_arch_opts(parser):
         help="Number of symbols exchanged between sender and receiver",
     )
     group.add_argument(
-        "--vocab_size",
+        "--vocab_s",
         type=int,
         default=2048,
         help="Total number of symbols in the game",

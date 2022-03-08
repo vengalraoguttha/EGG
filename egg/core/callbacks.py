@@ -145,15 +145,16 @@ class WandbLogger(Callback):
     def on_batch_end(
         self, logs: Interaction, loss: float, batch_id: int, is_training: bool = True
     ):
-        if is_training and self.trainer.distributed_context.is_leader:
+        if is_training and \
+                (self.trainer.distributed_context.is_leader or not self.trainer.distributed_context.is_distributed):
             self.log_to_wandb({"batch_loss": loss}, commit=True)
 
     def on_epoch_end(self, loss: float, logs: Interaction, epoch: int):
-        if self.trainer.distributed_context.is_leader:
+        if self.trainer.distributed_context.is_leader or not self.trainer.distributed_context.is_distributed:
             self.log_to_wandb({"train_loss": loss, "epoch": epoch}, commit=True)
 
     def on_validation_end(self, loss: float, logs: Interaction, epoch: int):
-        if self.trainer.distributed_context.is_leader:
+        if self.trainer.distributed_context.is_leader or not self.trainer.distributed_context.is_distributed:
             self.log_to_wandb({"validation_loss": loss, "epoch": epoch}, commit=True)
 
 

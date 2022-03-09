@@ -150,7 +150,7 @@ def get_callbacks(
         ConsoleLogger(as_json=True, print_train_loss=True),
         BestStatsTracker(),
         VisionModelSaver(shared_vision),
-        WandbLogger({}, project="fixed_length_initial_exp",run_id="1")
+        WandbLogger({}, project="fixed_length_com_cifar-10",run_id="1")
     ]
 
     if is_distributed:

@@ -20,6 +20,7 @@ def get_dataloader(
     return_original_image: bool = False,
     seed: int = 111,
     image_size: int = 32,
+    is_train: bool = True,
 ):
 
     transformations = ImageTransformation(
@@ -28,7 +29,7 @@ def get_dataloader(
 
     if dataset_name == "cifar10":
         train_dataset = datasets.CIFAR10(
-            root="./data", train=True, download=True, transform=transformations
+            root="./data", train=is_train, download=True, transform=transformations
         )
     else:
         train_dataset = datasets.ImageFolder(dataset_dir, transform=transformations)

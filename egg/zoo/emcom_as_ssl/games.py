@@ -6,9 +6,6 @@
 import torch
 
 from egg.core.interaction import LoggingStrategy
-from egg.core.gs_wrappers import FixedLengthSenderGS
-from egg.core.gs_wrappers import FixedLengthReceiverGS
-from egg.core.gs_wrappers import FixedLengthSenderReceiverGS
 from egg.zoo.emcom_as_ssl.archs import (
     EmComSSLSymbolGame,
     EmSSLSender,
@@ -17,6 +14,9 @@ from egg.zoo.emcom_as_ssl.archs import (
     VisionGameWrapper,
     VisionModule,
     get_vision_modules,
+    EmComFixedLengthSenderGS,
+    EmComFixedLengthReceiverGS,
+    EmComFixedLengthSenderReceiverGS,
 )
 from egg.zoo.emcom_as_ssl.losses import get_loss
 
@@ -57,16 +57,16 @@ def build_game(opts):
     test_logging_strategy = LoggingStrategy(False, False, True, True, True, False)
 
     if opts.fixed_symbols:
-        sender = FixedLengthSenderGS(
-            vision_encoder,
+        sender = EmComFixedLengthSenderGS(
+            visual_features_dim,
             vocab_size=opts.vocab_s,
             embed_dim=opts.embed_dim,
             hidden_size=opts.hidden_size,
             temperature=opts.gs_temperature,
             nos=opts.no_of_symbols,
         )
-        receiver = FixedLengthReceiverGS(
-            vision_encoder,
+        receiver = EmComFixedLengthReceiverGS(
+            visual_features_dim,
             vocab_size=opts.vocab_s,
             embed_dim=opts.embed_dim,
             hidden_size=opts.hidden_size,
@@ -96,7 +96,7 @@ def build_game(opts):
         )
 
     if opts.fixed_symbols:
-        game = FixedLengthSenderReceiverGS(sender, receiver, loss)
+        game = EmComFixedLengthSenderReceiverGS(sender, receiver, loss)
     else:
         game = EmComSSLSymbolGame(
             sender,
@@ -106,7 +106,7 @@ def build_game(opts):
             test_logging_strategy=test_logging_strategy,
         )
 
-        game = VisionGameWrapper(game, vision_encoder)
+    game = VisionGameWrapper(game, vision_encoder)
     if opts.distributed_context.is_distributed:
         game = torch.nn.SyncBatchNorm.convert_sync_batchnorm(game)
 

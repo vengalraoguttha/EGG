@@ -96,28 +96,37 @@ def main(params):
         "seed": opts.random_seed,
     }
     i_test_loader = get_dataloader(
-        dataset_dir="/datasets01/imagenet_full_size/061417/val", **data_args
+        dataset_dir=opts.dataset_dir,
+        dataset_name=opts.dataset_name,
+        image_size=opts.image_size,
+        batch_size=opts.batch_size,
+        num_workers=opts.num_workers,
+        is_distributed=opts.distributed_context.is_distributed,
+        seed=opts.random_seed,
+        use_augmentations=opts.use_augmentations,
+        return_original_image=opts.return_original_image,
+        is_train=False,
     )
-    o_test_loader = get_dataloader(
-        dataset_dir="/private/home/mbaroni/agentini/representation_learning/generalizaton_set_construction/80_generalization_data_set/",
-        **data_args,
-    )
+    # o_test_loader = get_dataloader(
+    #     dataset_dir="/private/home/mbaroni/agentini/representation_learning/generalizaton_set_construction/80_generalization_data_set/",
+    #     **data_args,
+    # )
 
     _, i_test_interaction = trainer.eval(i_test_loader)
     dump = dict((k, v.mean().item()) for k, v in i_test_interaction.aux.items())
     dump.update(dict(mode="VALIDATION_I_TEST"))
     print(json.dumps(dump), flush=True)
 
-    _, o_test_interaction = trainer.eval(o_test_loader)
-    dump = dict((k, v.mean().item()) for k, v in o_test_interaction.aux.items())
-    dump.update(dict(mode="VALIDATION_O_TEST"))
-    print(json.dumps(dump), flush=True)
+    # _, o_test_interaction = trainer.eval(o_test_loader)
+    # dump = dict((k, v.mean().item()) for k, v in o_test_interaction.aux.items())
+    # dump.update(dict(mode="VALIDATION_O_TEST"))
+    # print(json.dumps(dump), flush=True)
 
     if opts.checkpoint_dir:
         output_path = Path(opts.checkpoint_dir)
         output_path.mkdir(exist_ok=True, parents=True)
         torch.save(i_test_interaction, output_path / "i_test_interaction")
-        torch.save(o_test_interaction, output_path / "o_test_interaction")
+        # torch.save(o_test_interaction, output_path / "o_test_interaction")
 
     print("| FINISHED JOB")
 

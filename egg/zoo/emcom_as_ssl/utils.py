@@ -127,6 +127,36 @@ def get_game_arch_opts(parser):
         action="store_true",
         help="Use a simclr-like sender argmaxing the message_like layer at test time",
     )
+    group.add_argument(
+        "--fixed_symbols",
+        default=False,
+        action="store_true",
+        help="Use a fixed length communication (fixed number of symbols exchanged)",
+    )
+    group.add_argument(
+        "--no_of_symbols",
+        type=int,
+        default=2,
+        help="Number of symbols exchanged between sender and receiver",
+    )
+    group.add_argument(
+        "--vocab_s",
+        type=int,
+        default=2048,
+        help="Total number of symbols in the game",
+    )
+    group.add_argument(
+        "--embed_dim",
+        type=int,
+        default=2048,
+        help="Size of embedding in RNN",
+    )
+    group.add_argument(
+        "--hidden_size",
+        type=int,
+        default=2048,
+        help="Size of hidden dimension in RNN",
+    )
 
 
 def get_loss_opts(parser):

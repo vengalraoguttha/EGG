@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 
 from egg.core import Callback, ConsoleLogger, Interaction, TemperatureUpdater
+from egg.core.callbacks import WandbLogger
 
 
 class BestStatsTracker(Callback):
@@ -149,6 +150,7 @@ def get_callbacks(
         ConsoleLogger(as_json=True, print_train_loss=True),
         BestStatsTracker(),
         VisionModelSaver(shared_vision),
+        WandbLogger({}, project="fixed_length_com_cifar-10",run_id="1")
     ]
 
     if is_distributed:

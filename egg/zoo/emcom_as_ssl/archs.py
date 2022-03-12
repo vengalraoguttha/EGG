@@ -306,7 +306,7 @@ class EmComFixedLengthSenderGS(nn.Module):
 
         sequence = torch.stack(sequence).permute(1, 0, 2)
 
-        return e_t
+        return e_t, x.detach(), resnet_output.detach()
 
 
 class EmComFixedLengthReceiverGS(nn.Module):

@@ -65,12 +65,17 @@ def build_game(opts):
             temperature=opts.gs_temperature,
             nos=opts.no_of_symbols,
         )
-        receiver = EmComFixedLengthReceiverGS(
-            visual_features_dim,
-            vocab_size=opts.vocab_s,
-            embed_dim=opts.embed_dim,
-            hidden_size=opts.hidden_size,
-            nos=opts.no_of_symbols,
+        # receiver = EmComFixedLengthReceiverGS(
+        #     visual_features_dim,
+        #     vocab_size=opts.vocab_s,
+        #     embed_dim=opts.embed_dim,
+        #     hidden_size=opts.hidden_size,
+        #     nos=opts.no_of_symbols,
+        # )
+        receiver = Receiver(
+            input_dim=visual_features_dim,
+            hidden_dim=opts.projection_hidden_dim,
+            output_dim=opts.projection_output_dim,
         )
     elif opts.simclr_sender:
         sender = SimCLRSender(
@@ -96,7 +101,14 @@ def build_game(opts):
         )
 
     if opts.fixed_symbols:
-        game = EmComFixedLengthSenderReceiverGS(sender, receiver, loss)
+        # game = EmComFixedLengthSenderReceiverGS(sender, receiver, loss)
+        game = EmComSSLSymbolGame(
+            sender,
+            receiver,
+            loss,
+            train_logging_strategy=train_logging_strategy,
+            test_logging_strategy=test_logging_strategy,
+        )
     else:
         game = EmComSSLSymbolGame(
             sender,

@@ -57,13 +57,13 @@ def build_game(opts):
     test_logging_strategy = LoggingStrategy(False, False, True, True, True, False)
 
     if opts.fixed_symbols:
-        sender = EmComFixedLengthSenderGS(
-            visual_features_dim,
-            vocab_size=opts.vocab_s,
-            embed_dim=opts.embed_dim,
-            hidden_size=opts.hidden_size,
+        sender = EmSSLSender(
+            input_dim=visual_features_dim,
+            hidden_dim=opts.projection_hidden_dim,
+            output_dim=opts.projection_output_dim,
             temperature=opts.gs_temperature,
-            nos=opts.no_of_symbols,
+            trainable_temperature=opts.train_gs_temperature,
+            straight_through=opts.straight_through,
         )
         # receiver = EmComFixedLengthReceiverGS(
         #     visual_features_dim,

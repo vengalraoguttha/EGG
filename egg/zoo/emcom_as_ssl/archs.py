@@ -276,37 +276,44 @@ class EmComFixedLengthSenderGS(nn.Module):
             self.cell = nn.LSTMCell(input_size=embed_dim, hidden_size=hidden_size)
         else:
             raise ValueError(f"Unknown RNN Cell: {cell}")
-
+        self.fc_out = nn.Linear(hidden_size, embed_dim, bias=False)
         self.reset_parameters()
 
     def reset_parameters(self):
         nn.init.normal_(self.sos_embedding, 0.0, 0.01)
 
     def forward(self, resnet_output, aux_input=None):
+        # first_projection = self.fc(resnet_output)
+        # prev_c = torch.zeros_like(first_projection)  # only for LSTM
+        #
+        # e_t = torch.stack([self.sos_embedding] * first_projection.size(0))
+        # sequence = []
+        #
+        # for step in range(self.nos):
+        #     if isinstance(self.cell, nn.LSTMCell):
+        #         h_t, prev_c = self.cell(e_t, (first_projection, prev_c))
+        #     else:
+        #         h_t = self.cell(e_t, first_projection)
+        #
+        #     step_logits = self.hidden_to_output(h_t)
+        #     x = gumbel_softmax_sample(
+        #         step_logits, self.temperature, self.training, self.straight_through
+        #     )
+        #
+        #     first_projection = h_t
+        #     e_t = self.embedding(x)
+        #     sequence.append(x)
+        #
+        # sequence = torch.stack(sequence).permute(1, 0, 2)
+        #
+        # return sequence
+
         first_projection = self.fc(resnet_output)
-        prev_c = torch.zeros_like(first_projection)  # only for LSTM
-
-        e_t = torch.stack([self.sos_embedding] * first_projection.size(0))
-        sequence = []
-
-        for step in range(self.nos):
-            if isinstance(self.cell, nn.LSTMCell):
-                h_t, prev_c = self.cell(e_t, (first_projection, prev_c))
-            else:
-                h_t = self.cell(e_t, first_projection)
-
-            step_logits = self.hidden_to_output(h_t)
-            x = gumbel_softmax_sample(
-                step_logits, self.temperature, self.training, self.straight_through
-            )
-
-            first_projection = h_t
-            e_t = self.embedding(x)
-            sequence.append(x)
-
-        sequence = torch.stack(sequence).permute(1, 0, 2)
-
-        return sequence
+        message = gumbel_softmax_sample(
+            first_projection, self.temperature, self.training, self.straight_through
+        )
+        out = self.fc_out(message)
+        return out, message.detach(), resnet_output.detach()
 
 
 class EmComFixedLengthReceiverGS(nn.Module):
@@ -336,27 +343,27 @@ class EmComFixedLengthReceiverGS(nn.Module):
 
     def forward(self, message, resnet_output=None, aux_input=None):
 
-        emb = self.embedding(message)
+        # emb = self.embedding(message)
+        #
+        # prev_hidden = None
+        # prev_c = None
+        # h_t = None
+        #
+        # # to get an access to the hidden states, we have to unroll the cell ourselves
+        # for step in range(message.size(1)):
+        #     e_t = emb[:, step, ...]
+        #     if isinstance(self.cell, nn.LSTMCell):
+        #         h_t, prev_c = (
+        #             self.cell(e_t, (prev_hidden, prev_c))
+        #             if prev_hidden is not None
+        #             else self.cell(e_t)
+        #         )
+        #     else:
+        #         h_t = self.cell(e_t, prev_hidden)
+        #
+        #     prev_hidden = h_t
 
-        prev_hidden = None
-        prev_c = None
-        h_t = None
-
-        # to get an access to the hidden states, we have to unroll the cell ourselves
-        for step in range(message.size(1)):
-            e_t = emb[:, step, ...]
-            if isinstance(self.cell, nn.LSTMCell):
-                h_t, prev_c = (
-                    self.cell(e_t, (prev_hidden, prev_c))
-                    if prev_hidden is not None
-                    else self.cell(e_t)
-                )
-            else:
-                h_t = self.cell(e_t, prev_hidden)
-
-            prev_hidden = h_t
-
-        return h_t, self.fc.forward(resnet_output)
+        return self.fc.forward(resnet_output)
 
 
 class EmComFixedLengthSenderReceiverGS(nn.Module):
@@ -385,8 +392,8 @@ class EmComFixedLengthSenderReceiverGS(nn.Module):
         )
 
     def forward(self, sender_input, labels, receiver_input=None, aux_input=None):
-        messages = self.sender(sender_input, aux_input)
-        message, receiver_output = self.receiver(messages, receiver_input, aux_input)
+        message,_,_ = self.sender(sender_input, aux_input)
+        receiver_output = self.receiver(None, receiver_input, aux_input)
 
         loss, aux_info = self.loss(
             sender_input,
